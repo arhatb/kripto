@@ -98,19 +98,23 @@
   }
 
   async function update() {
-    const prices = await fetchPrices();
-    if (!prices) return;
-    const now = new Date().toLocaleTimeString('tr-TR');
-    labels.push(now);
-    if (labels.length > 20) labels.shift();
+  const prices = await fetchPrices();
+  if (!prices) return;
+  const now = new Date().toLocaleTimeString('tr-TR');
+  labels.push(now);
+  if (labels.length > 20) labels.shift();
 
-    for (const coin in datasets) {
+  for (const coin in datasets) {
+    if (prices.hasOwnProperty(coin) && prices[coin].usd != null) {
       datasets[coin].data.push(prices[coin].usd);
       if (datasets[coin].data.length > 20) datasets[coin].data.shift();
+    } else {
+      console.warn(`Fiyat yok: ${coin}`);
     }
-
-    chart.update();
   }
+  chart.update();
+}
+
 
   setInterval(update, 5000);
   update();
