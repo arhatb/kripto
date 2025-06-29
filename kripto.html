@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<title>Canlı Kripto Grafiği</title>
+<style>
+  body {
+    margin: 0;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px;
+    min-height: 100vh;
+  }
+  h1 {
+    margin-bottom: 20px;
+    color: #03e9f4;
+  }
+  #chartContainer {
+    width: 90%;
+    max-width: 900px;
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 30px #03e9f4;
+  }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<h1>📊 Canlı Kripto Fiyatları</h1>
+<div id="chartContainer">
+  <canvas id="cryptoChart"></canvas>
+</div>
+
+<script>
+  const ctx = document.getElementById('cryptoChart').getContext('2d');
+  const labels = [];
+  const datasets = {
+    bitcoin: {
+      label: 'Bitcoin (BTC)',
+      data: [],
+      borderColor: '#f2a900',
+      backgroundColor: 'rgba(242, 169, 0, 0.2)',
+      tension: 0.3,
+      pointRadius: 3
+    },
+    ethereum: {
+      label: 'Ethereum (ETH)',
+      data: [],
+      borderColor: '#3c3c3d',
+      backgroundColor: 'rgba(60, 60, 61, 0.2)',
+      tension: 0.3,
+      pointRadius: 3
+    },
+    cardano: {
+      label: 'Cardano (ADA)',
+      data: [],
+      borderColor: '#0033ad',
+      backgroundColor: 'rgba(0, 51, 173, 0.2)',
+      tension: 0.3,
+      pointRadius: 3
+    }
+  };
+
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: Object.values(datasets)
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#ccc' } },
+        y: { ticks: { color: '#ccc' } }
+      },
+      plugins: {
+        legend: { labels: { color: '#03e9f4' } }
+      }
+    }
+  });
+
+  async function fetchPrices() {
+    try {
+      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum,cardano&vs_currencies=usd');
+      if (!res.ok) throw new Error('API Hatası');
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  }
+
+  async function update() {
+    const prices = await fetchPrices();
+    if (!prices) return;
+    const now = new Date().toLocaleTimeString('tr-TR');
+    labels.push(now);
+    if (labels.length > 20) labels.shift();
+
+    for (const coin in datasets) {
+      datasets[coin].data.push(prices[coin].usd);
+      if (datasets[coin].data.length > 20) datasets[coin].data.shift();
+    }
+
+    chart.update();
+  }
+
+  setInterval(update, 5000);
+  update();
+</script>
+
+</body>
+</html>
